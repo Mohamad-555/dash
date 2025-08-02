@@ -61,6 +61,8 @@ export interface Lesson {
   lesson_date: string;
   instructor_id: number;
   course_id: number[];
+  instructors?: Instructor;
+  courses?: Course[];
 }
 
 export interface Exam {

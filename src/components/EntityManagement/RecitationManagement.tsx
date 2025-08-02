@@ -32,6 +32,8 @@ interface RecitationResponse {
 export const RecitationManagement: React.FC = () => {
   const [recitations, setRecitations] = useState<Recitation[]>([]);
   const [tahfeezCourses, setTahfeezCourses] = useState<Course[]>([]);
+  const [courseStudents, setCourseStudents] = useState<Student[]>([]);
+  const [courseLessons, setCourseLessons] = useState<Lesson[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
   const [selectedCourseTitle, setSelectedCourseTitle] = useState<string>("");
   const [courseRecitations, setCourseRecitations] = useState<RecitationResponse | null>(null);
@@ -49,6 +51,26 @@ export const RecitationManagement: React.FC = () => {
       setTahfeezCourses(tahfeezOnly);
     } catch (error) {
       console.error("Failed to fetch Tahfeez courses:", error);
+    }
+  };
+
+  const fetchCourseStudents = async (courseId: number) => {
+    try {
+      const response = await apiService.getCourseStudents(courseId);
+      setCourseStudents(response.students || response.data || []);
+    } catch (error) {
+      console.error("Failed to fetch course students:", error);
+      setCourseStudents([]);
+    }
+  };
+
+  const fetchCourseLessons = async (courseId: number) => {
+    try {
+      const response = await apiService.getCourseLessons(courseId);
+      setCourseLessons(response.lessons || response.data || []);
+    } catch (error) {
+      console.error("Failed to fetch course lessons:", error);
+      setCourseLessons([]);
     }
   };
 
@@ -110,12 +132,20 @@ export const RecitationManagement: React.FC = () => {
       setSelectedCourse(null);
       setSelectedCourseTitle("");
       setCourseRecitations(null);
+      setCourseStudents([]);
+      setCourseLessons([]);
       fetchAllRecitations();
       return;
     }
 
     setSelectedCourse(courseId);
-    await fetchRecitationsByCourse(courseId);
+    
+    // Fetch course-specific data
+    await Promise.all([
+      fetchRecitationsByCourse(courseId),
+      fetchCourseStudents(courseId),
+      fetchCourseLessons(courseId)
+    ]);
   };
 
   const handleSave = async (recitationData: Recitation) => {
@@ -291,6 +321,9 @@ export const RecitationManagement: React.FC = () => {
       >
         <RecitationForm
           recitation={editingRecitation}
+          courseStudents={courseStudents}
+          courseLessons={courseLessons}
+          selectedCourse={selectedCourse}
           onSave={handleSave}
           onCancel={() => {
             setIsModalOpen(false);

@@ -48,6 +48,24 @@ async getRecitationsByCourse(courseId: number) {
   async update(entity: EntityType, id: number, data: any) {
     try {
       const isFormData = data instanceof FormData;
+      
+      // Special handling for recitation updates
+      if (entity === 'recitation' && data.course_id && data.lesson_id) {
+        const res = await axios.post(
+          `${this.baseURL}/recitation/update/${data.course_id}/${data.lesson_id}`,
+          data,
+          {
+            headers: {
+              ...(isFormData ? {} : { "Content-Type": "application/json" }),
+              "ngrok-skip-browser-warning": "true",
+              Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+            },
+          }
+        );
+        return res.data;
+      }
+      
+      // Default update for other entities
       const res = await axios.post(
         `${this.baseURL}/${entity}/update/${id}`,
         data,
@@ -121,6 +139,28 @@ async getRecitationsByCourse(courseId: number) {
       return response.data;
     } catch (error) {
       console.error(`❌ Failed to fetch ${entity} by ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async getCourseStudents(courseId: number) {
+    try {
+      const config = this.getAxiosConfig();
+      const response = await axios.get(`${this.baseURL}/courses/${courseId}/students`, config);
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Failed to fetch students for course ${courseId}:`, error);
+      throw error;
+    }
+  }
+
+  async getCourseLessons(courseId: number) {
+    try {
+      const config = this.getAxiosConfig();
+      const response = await axios.get(`${this.baseURL}/courses/${courseId}/lessons`, config);
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Failed to fetch lessons for course ${courseId}:`, error);
       throw error;
     }
   }

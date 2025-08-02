@@ -8,6 +8,9 @@ import { MultiSelect } from '../UI/MultiSelect';
 
 interface RecitationFormProps {
   recitation?: Recitation | null;
+  courseStudents?: Student[];
+  courseLessons?: Lesson[];
+  selectedCourse?: number | null;
   onSave: (data: Recitation) => void;
   onCancel: () => void;
   validationErrors?: Record<string, string[]>;
@@ -15,6 +18,9 @@ interface RecitationFormProps {
 
 export const RecitationForm: React.FC<RecitationFormProps> = ({
   recitation,
+  courseStudents = [],
+  courseLessons = [],
+  selectedCourse,
   onSave,
   onCancel,
   validationErrors = {},
@@ -32,8 +38,6 @@ export const RecitationForm: React.FC<RecitationFormProps> = ({
   });
 
   const [courses, setCourses] = useState<Course[]>([]);
-  const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
 
@@ -50,7 +54,7 @@ export const RecitationForm: React.FC<RecitationFormProps> = ({
       setIsEditMode(false);
       setFormData({
         student_id: 0,
-        course_id: 0,
+        course_id: selectedCourse || 0,
         lesson_id: 0,
         recitation_per_page: [],
         recitation_evaluation: '',
@@ -60,21 +64,17 @@ export const RecitationForm: React.FC<RecitationFormProps> = ({
         homework: [],
       });
     }
-    fetchData();
+    fetchCourses();
   }, [recitation]);
 
-  const fetchData = async () => {
+  const fetchCourses = async () => {
     try {
-      const [coursesResponse, lessonsResponse, studentsResponse] = await Promise.all([
+      const coursesResponse = await Promise.all([
         apiService.getAll('courses'),
-        apiService.getAll('lessons'),
-        apiService.getAll('students'),
       ]);
-      setCourses(coursesResponse.courses || coursesResponse.data || []);
-      setLessons(lessonsResponse.lessons || lessonsResponse.data || []);
-      setStudents(studentsResponse.students || studentsResponse.data || []);
+      setCourses(coursesResponse[0].courses || coursesResponse[0].data || []);
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Failed to fetch courses:', error);
     }
   };
 
@@ -97,12 +97,12 @@ export const RecitationForm: React.FC<RecitationFormProps> = ({
     label: course.title,
   }));
 
-  const lessonOptions = lessons.map((lesson) => ({
+  const lessonOptions = courseLessons.map((lesson) => ({
     value: lesson.id!,
     label: lesson.lesson_title,
   }));
 
-  const studentOptions = students.map((student) => ({
+  const studentOptions = courseStudents.map((student) => ({
     value: student.id!,
     label: student.name,
   }));
@@ -125,7 +125,7 @@ export const RecitationForm: React.FC<RecitationFormProps> = ({
     label: `Assignment ${i + 1}`,
   }));
 
-  const selectedStudent = students.find(s => s.id === formData.student_id);
+  const selectedStudent = courseStudents.find(s => s.id === formData.student_id);
   const selectedCourse = courses.find(c => c.id === formData.course_id);
 
   return (
@@ -186,6 +186,7 @@ export const RecitationForm: React.FC<RecitationFormProps> = ({
                   onChange={(e) => handleChange('course_id', parseInt(e.target.value))}
                   options={courseOptions}
                   error={validationErrors.course_id?.[0]}
+                  disabled={!!selectedCourse}
                   required
                 />
                 <Select
