@@ -10,7 +10,7 @@ interface RecitationFormProps {
   recitation?: Recitation | null;
   courseStudents?: Student[];
   courseLessons?: Lesson[];
-  selectedCourse?: number | null;
+  initialSelectedCourseId?: number | null;
   onSave: (data: Recitation) => void;
   onCancel: () => void;
   validationErrors?: Record<string, string[]>;
@@ -20,7 +20,7 @@ export const RecitationForm: React.FC<RecitationFormProps> = ({
   recitation,
   courseStudents = [],
   courseLessons = [],
-  selectedCourse,
+  initialSelectedCourseId,
   onSave,
   onCancel,
   validationErrors = {},
@@ -54,7 +54,7 @@ export const RecitationForm: React.FC<RecitationFormProps> = ({
       setIsEditMode(false);
       setFormData({
         student_id: 0,
-        course_id: selectedCourse || 0,
+        course_id: initialSelectedCourseId || 0,
         lesson_id: 0,
         recitation_per_page: [],
         recitation_evaluation: '',
@@ -186,7 +186,7 @@ export const RecitationForm: React.FC<RecitationFormProps> = ({
                   onChange={(e) => handleChange('course_id', parseInt(e.target.value))}
                   options={courseOptions}
                   error={validationErrors.course_id?.[0]}
-                  disabled={!!selectedCourse}
+                  disabled={!!initialSelectedCourseId}
                   required
                 />
                 <Select
